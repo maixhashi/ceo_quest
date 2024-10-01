@@ -29,3 +29,10 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Story
+use App\Http\Controllers\StoryController;
+
+Route::get('/story', [StoryController::class, 'index'])->name('story');
+Route::post('/story/progress', [StoryController::class, 'progress'])->name('story.progress');
+Route::post('/story/reset', [StoryController::class, 'reset'])->name('story.reset');

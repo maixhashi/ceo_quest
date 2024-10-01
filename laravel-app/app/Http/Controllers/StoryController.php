@@ -162,20 +162,23 @@ class StoryController extends Controller
             [
                 "id" => "current-user-e-commerce-saas-company-name-decision",
                 "character" => "ユーザー（社長）",
-                "text" => "会社名は‥[formに入力した内容]だ！",
+                "text" => "会社名は‥",
                 "next" => "choice-repeat-current-user-e-commerce-saas-company-name-decision",
+                "showForm" => true, // フォームを表示するためのフラグを追加
             ],
             [
                 "id" => "current-user-human-resource-saas-company-name-decision",
                 "character" => "ユーザー（社長）",
-                "text" => "会社名は‥[formに入力した内容]だ！",
+                "text" => "会社名は‥",
                 "next" => "choice-repeat-current-user-human-resource-saas-company-name-decision",
+                "showForm" => true, // フォームを表示するためのフラグを追加
             ],
             [
                 "id" => "current-user-task-management-saas-company-name-decision",
                 "character" => "ユーザー（社長）",
-                "text" => "会社名は‥[formに入力した内容]だ！",
+                "text" => "会社名は‥",
                 "next" => "choice-repeat-current-user-task-management-saas-company-name-decision",
+                "showForm" => true, // フォームを表示するためのフラグを追加
             ],
 
 
@@ -242,21 +245,34 @@ class StoryController extends Controller
         ];
     }
 
-    // その他のメソッドや処理...
     public function index()
     {
-        // 現在のストーリーIDをセッションから取得、なければ 'current-user-start' に戻す
+        // 現在のストーリーIDをセッションから取得
         $currentStoryId = Session::get('current_story', 'current-user-start');
-
-        // 現在のストーリーをIDで検索
+    
+        // 現在のストーリーを取得
         $currentStory = $this->getStoryById($currentStoryId);
-
+    
+        // セリフIDでフォームの表示を判定
+        $showFormForCompanyName = in_array($currentStoryId, [
+            'current-user-e-commerce-saas-company-name-decision',
+            'current-user-human-resource-saas-company-name-decision',
+            'current-user-task-management-saas-company-name-decision'
+        ]);
+    
+        // 会社名が必要な場合、セッションから会社名を取得してセリフに反映
+        if ($showFormForCompanyName && Session::has('company_name')) {
+            $companyName = Session::get('company_name');
+            $currentStory['text'] = str_replace('[formに入力した内容]', $companyName, $currentStory['text']);
+        }
+    
         return view('story', [
             'story' => $currentStory,
-            'hasNext' => isset($currentStory['next']), // 次に進むかどうかの判定
+            'showForm' => $showFormForCompanyName,
+            'hasNext' => isset($currentStory['next']),
         ]);
     }
-
+    
     public function progress(Request $request)
     {
         // 選択された次のストーリーIDを取得
@@ -287,4 +303,40 @@ class StoryController extends Controller
         Session::forget('current_story');
         return redirect()->route('story');
     }
+
+    public function saveCompanyName(Request $request)
+    {
+        // フォームから会社名を取得
+        $companyName = $request->input('company_name');
+
+        // 会社名をセッションに保存
+        Session::put('company_name', $companyName);
+
+        // セッション内の現在のストーリーIDを取得
+        $currentStoryId = Session::get('current_story');
+
+        // 次のストーリーに進むため、セッションに次のストーリーIDをセット
+        // (ここでは次のストーリーIDを事前に決めて進めます)
+        $nextStoryId = $this->getNextStoryIdAfterCompanyName($currentStoryId);
+        if ($nextStoryId !== null) {
+            Session::put('current_story', $nextStoryId);
+        }
+
+        return redirect()->route('story');
+    }
+
+    // 次のストーリーIDを取得するためのヘルパーメソッド
+    private function getNextStoryIdAfterCompanyName($currentStoryId)
+    {
+        // ストーリーIDごとの次のIDを設定
+        $nextStoryMap = [
+            'current-user-e-commerce-saas-company-name-decision' => 'choice-repeat-current-user-e-commerce-saas-company-name-decision',
+            'current-user-human-resource-saas-company-name-decision' => 'choice-repeat-current-user-human-resource-saas-company-name-decision',
+            'current-user-task-management-saas-company-name-decision' => 'choice-repeat-current-user-task-management-saas-company-name-decision',
+            // 他のケースも必要に応じて追加
+        ];
+
+        return $nextStoryMap[$currentStoryId] ?? null;
+    }
+
 }

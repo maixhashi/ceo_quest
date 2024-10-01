@@ -35,8 +35,6 @@ services:
     environment:
       - "MYSQL_ROOT_PASSWORD=secret"  # 変更: 環境変数名の修正
       - "MYSQL_DATABASE=laravel"        # 変更: 環境変数名の修正
-      - "MYSQL_USER=root"                # 変更: 環境変数名の修正
-      - "MYSQL_PASSWORD=secret"          # 変更: 環境変数名の修正
     volumes:
       - mysql_data:/var/lib/mysql
 

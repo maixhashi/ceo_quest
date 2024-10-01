@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    volumes:
+      - ./laravel-app/:/var/www/laravel-app
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+      - "5173:5173"
+    working_dir: /var/www/laravel-app
+    environment:
+      - "DB_HOST=mysql"  # 変更: MySQLサービスの名前
+      - "DB_PORT=3306"
+      - "DB_DATABASE=laravel"
+      - "DB_USERNAME=root"
+      - "DB_PASSWORD=secret"
+      
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_server
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./:/var/www
+      
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_db
+    environment:
+      - "MYSQL_ROOT_PASSWORD=secret"  # 変更: 環境変数名の修正
+      - "MYSQL_DATABASE=laravel"        # 変更: 環境変数名の修正
+      - "MYSQL_USER=root"                # 変更: 環境変数名の修正
+      - "MYSQL_PASSWORD=secret"          # 変更: 環境変数名の修正
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
